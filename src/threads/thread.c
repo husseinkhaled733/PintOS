@@ -58,7 +58,7 @@ static long long kernel_ticks; /* # of timer ticks in kernel threads. */
 static long long user_ticks;   /* # of timer ticks in user programs. */
 
 /* Scheduling. */
-#define TIME_SLICE 4          /* # of timer ticks to give each thread. */
+#define TIME_SLICE 4 /* # of timer ticks to give each thread. */
 
 static unsigned thread_ticks; /* # of timer ticks since last yield. */
 
@@ -126,8 +126,6 @@ void thread_start(void)
   struct semaphore idle_started;
   sema_init(&idle_started, 0);
   thread_create("idle", PRI_MIN, idle, &idle_started);
-
-  load_avg = int_to_real(0);
 
   /* Start preemptive thread scheduling. */
   intr_enable();
@@ -254,10 +252,12 @@ tid_t thread_create(const char *name, int priority,
    primitives in synch.h. */
 void thread_block(void)
 {
+
   ASSERT(!intr_context());
   ASSERT(intr_get_level() == INTR_OFF);
 
   thread_current()->status = THREAD_BLOCKED;
+
   schedule();
 }
 
@@ -406,8 +406,6 @@ void thread_set_nice(int nice UNUSED)
   t->nice = nice;
 
   thread_update_priority_mlfqs(t);
-
-  // printf("nice\n");
 
   thread_try_yeild();
 }
@@ -655,13 +653,6 @@ uint32_t thread_stack_ofs = offsetof(struct thread, stack);
   priority = PRI_MAX - (recent_cpu / 4) - (nice * 2)*/
 void thread_update_priority_mlfqs(struct thread *t)
 {
-
-  // int priority = real_to_int_toward_nearest(
-  //   sub_int_from_real(
-  //     subtract(int_to_real(PRI_MAX) , divide_by_int(t->recent_cpu,4))
-  //     , t->nice * 2)
-  //   );
-
   int priority = PRI_MAX -
                  real_to_int_toward_nearest(
                      divide_by_int(t->recent_cpu, 4)) -
@@ -673,8 +664,6 @@ void thread_update_priority_mlfqs(struct thread *t)
     priority = PRI_MAX;
 
   t->priority = priority;
-
-  // printf("%d\n",t->priority);
 }
 
 /* Update recent cpu for every theard and updates system load average with eqns:
@@ -683,7 +672,7 @@ void thread_update_priority_mlfqs(struct thread *t)
 void thread_update_recent_cpu_and_load_avg(void)
 {
 
-  // enum intr_level old_level = intr_disable();
+  enum intr_level old_level = intr_disable();
 
   int ready_threads = get_ready_threads();
 
@@ -696,12 +685,7 @@ void thread_update_recent_cpu_and_load_avg(void)
 
   thread_foreach(thread_update_recent_cpu, NULL);
 
-  // printf("update\n");
-
-  thread_try_yeild();
-
-  // intr_set_level(old_level);
-
+  intr_set_level(old_level);
 }
 
 /* Updates recent cpu for a thread with eqn:
@@ -726,8 +710,6 @@ void thread_update_recent_cpu(struct thread *t, void *aux UNUSED)
 void thread_try_yeild(void)
 {
 
-  if (intr_context()) return;
-
   enum intr_level old_level = intr_disable();
 
   bool flag = false;
@@ -746,6 +728,7 @@ void thread_try_yeild(void)
   intr_set_level(old_level);
 
   if (flag) thread_yield();
+  
 }
 
 /* Puts the thread coming from timer_sleep() to sleep. It sets the
@@ -763,10 +746,12 @@ Wake up time of it, puts it in the list, then send it to be
 blocked. */
 void thread_sleep(int64_t ticks, int64_t current_time)
 {
+
   int64_t wake_up_time = current_time + ticks;
 
   thread_current()->waik_up_time = wake_up_time;
   list_insert_ordered(&sleeping_list, &thread_current()->sleeping_elem, thread_less_waik, NULL);
+
   thread_block();
 }
 
@@ -781,20 +766,19 @@ bool list_less_by_priority_comp(
   return a_member <= b_member;
 }
 
-void thread_update_priority_mlfqs_each(struct thread *t, void *aux UNUSED)
-{
-  thread_update_priority_mlfqs(t);
-}
+
 
 void thread_update_priority_mlfqs_all(void)
 {
-
-  // enum intr_level old_level = intr_disable();
-
   thread_foreach(thread_update_priority_mlfqs_each, NULL);
   list_sort(&ready_list, ComparePriority, NULL);
+}
 
-  // intr_set_level(old_level);
+void thread_update_priority_mlfqs_each(struct thread *t, void *aux UNUSED)
+{
+  enum intr_level old_level = intr_disable();
+  thread_update_priority_mlfqs(t);
+  intr_set_level(old_level);
 }
 
 void inc_recent_cpu(struct thread *t)
@@ -838,6 +822,7 @@ void thread_update_priority(struct thread *t)
   enum intr_level old_level = intr_disable();
   int max_pri = t->real_priority;
   int lock_pri;
+
   /*we want to check if after updating the lock max priority the maximum priority
    * of the all the locks the thread is holding will be affected or not
  /* If the thread is holding locks, pick the one with the highest max_priority.
