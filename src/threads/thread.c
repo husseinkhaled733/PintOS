@@ -59,6 +59,7 @@ static long long user_ticks;   /* # of timer ticks in user programs. */
 
 /* Scheduling. */
 #define TIME_SLICE 4          /* # of timer ticks to give each thread. */
+
 static unsigned thread_ticks; /* # of timer ticks since last yield. */
 
 /* If false (default), use round-robin scheduler.
@@ -371,7 +372,11 @@ void thread_set_priority(int new_priority)
 {
   if (thread_mlfqs)
     return;
+
   enum intr_level old_level = intr_disable();
+
+  bool flag = false;
+
   struct thread *cur = thread_current();
   int old_priority = cur->priority;
   cur->real_priority = new_priority;
@@ -381,9 +386,11 @@ void thread_set_priority(int new_priority)
   if (list_empty(&cur->Owned_locks) || new_priority > old_priority)
   {
     cur->priority = new_priority;
-    thread_yield();
+    flag = true;
   }
   intr_set_level(old_level);
+
+  if (flag) thread_yield();
 }
 
 /* Returns the current thread's priority. */
@@ -719,21 +726,26 @@ void thread_update_recent_cpu(struct thread *t, void *aux UNUSED)
 void thread_try_yeild(void)
 {
 
-  // enum intr_level old_level = intr_disable();
+  if (intr_context()) return;
 
-  struct thread *t = NULL;
+  enum intr_level old_level = intr_disable();
+
+  bool flag = false;
+
   if (!list_empty(&ready_list))
   {
     struct thread *max_priority_thread = list_entry(
         list_front(&ready_list), struct thread, elem);
 
-    if (max_priority_thread->priority >= thread_current()->priority)
+    if (max_priority_thread->priority > thread_current()->priority)
     {
-      // thread_yield();
+      flag = true;
     }
   }
 
-  // intr_set_level(old_level);
+  intr_set_level(old_level);
+
+  if (flag) thread_yield();
 }
 
 /* Puts the thread coming from timer_sleep() to sleep. It sets the
