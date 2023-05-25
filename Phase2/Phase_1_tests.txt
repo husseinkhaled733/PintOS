@@ -1,0 +1,34 @@
+------------------------------------------------------------
+Part 1 - Alarm
+------------------------------------------------------------
+pintos -v -k -T 60 –bochs -- -q run alarm-single
+pintos -v -k -T 60 –bochs -- -q run alarm-multiple
+pintos -v -k -T 60 –bochs -- -q run alarm-simultaneous
+pintos -v -k -T 60 –bochs -- -q run alarm-zero
+pintos -v -k -T 60 –bochs -- -q run alarm-negative
+------------------------------------------------------------
+Part 2 - Priority Donation
+------------------------------------------------------------
+pintos -v -k -T 60 –bochs -- -q run alarm-priority
+pintos -v -k -T 60 –bochs -- -q run priority-change
+pintos -v -k -T 60 –bochs -- -q run priority-donate-one
+pintos -v -k -T 60 –bochs -- -q run priority-donate-multiple
+pintos -v -k -T 60 –bochs -- -q run priority-donate-multiple2
+pintos -v -k -T 60 –bochs -- -q run priority-donate-nest
+pintos -v -k -T 60 –bochs -- -q run priority-donate-sema
+pintos -v -k -T 60 –bochs -- -q run priority-donate-lower
+pintos -v -k -T 60 –bochs -- -q run priority-fifo
+pintos -v -k -T 60 –bochs -- -q run priority-preempt
+pintos -v -k -T 60 –bochs -- -q run priority-sema
+pintos -v -k -T 60 –bochs -- -q run priority-condvar
+pintos -v -k -T 60 –bochs -- -q run priority-donate-chain
+-----------------------------------------------------------
+pintos -v -k -T 60 –bochs -- -q -mlfqs run mlfqs-load-1
+pintos -v -k -T 60 –bochs -- -q -mlfqs run mlfqs-load-60
+pintos -v -k -T 60 –bochs -- -q -mlfqs run mlfqs-load-avg
+pintos -v -k -T 60 –bochs -- -q -mlfqs run mlfqs-recent-1
+pintos -v -k -T 60 –bochs -- -q -mlfqs run mlfqs-fair-2
+pintos -v -k -T 60 –bochs -- -q -mlfqs run mlfqs-fair-20
+pintos -v -k -T 60 –bochs -- -q -mlfqs run mlfqs-nice-2
+pintos -v -k -T 60 –bochs -- -q -mlfqs run mlfqs-nice-10
+pintos -v -k -T 60 –bochs -- -q -mlfqs run mlfqs-block
